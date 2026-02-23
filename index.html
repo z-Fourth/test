@@ -31,8 +31,6 @@ textarea {
   min-height: 100px;
   max-height: 300px;
   overflow-y: auto;
-  white-space: pre-wrap;
-  word-wrap: break-word;
   width: 100%;
   padding: 14px;
   border-radius: 12px;
@@ -62,6 +60,15 @@ button {
 }
 
 button:hover { background: #5941c9; }
+
+#shuffleBtn{
+  margin-top:8px;
+  background:#ff9800;
+}
+
+#shuffleBtn:hover{
+  background:#e68900;
+}
 
 .post {
   background: #f1f1f1;
@@ -106,6 +113,7 @@ button:hover { background: #5941c9; }
   <input id="nicknameInput" placeholder="Nickname (Optional)" />
   <textarea id="statusInput" placeholder="Your idea"></textarea>
   <button onclick="postStatus()">Post</button>
+  <button id="shuffleBtn">🔀 Shuffle</button>
 
   <div id="posts"></div>
 </div>
@@ -117,30 +125,25 @@ import {
   onSnapshot, serverTimestamp, deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* 🔥 Firebase */
+/* Firebase */
 const firebaseConfig = {
-  apiKey: "AIzaSyC3Yu_mU38Ru7PIEGR-2rNSo5FoelowrUQ",
-  authDomain: "tuanhh-f16a9.firebaseapp.com",
-  projectId: "tuanhh-f16a9",
-  storageBucket: "tuanhh-f16a9.appspot.com",
-  messagingSenderId: "71969140903",
-  appId: "1:71969140903:web:49986baacfbbd1f9e8ab82"
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_ID",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🌍 Azure Translator */
-const AZURE_KEY = "6rJ6HYTwtmUotxFYAPRfsyQgJGAhz1G434PD1d8CcS0LC4aYxB7bJQQJ99CBAC3pKaRXJ3w3AAAbACOGZpu7";
+/* Azure Translator */
+const AZURE_KEY = "YOUR_AZURE_KEY";
 const AZURE_REGION = "eastasia";
 const AZURE_ENDPOINT = "https://api.cognitive.microsofttranslator.com";
 
-// 🌍 lấy ngôn ngữ người truy cập
 function getUserLanguage() {
   return (navigator.language || "en").split("-")[0];
 }
 
-// 🔍 detect ngôn ngữ văn bản
 async function detectLanguage(text) {
   const res = await fetch(
     AZURE_ENDPOINT + "/detect?api-version=3.0",
@@ -154,12 +157,10 @@ async function detectLanguage(text) {
       body: JSON.stringify([{ Text: text }])
     }
   );
-
   const data = await res.json();
   return data[0]?.language || "en";
 }
 
-// 🌐 dịch văn bản
 async function translateText(text, toLang) {
   const res = await fetch(
     AZURE_ENDPOINT + `/translate?api-version=3.0&to=${toLang}`,
@@ -173,12 +174,11 @@ async function translateText(text, toLang) {
       body: JSON.stringify([{ Text: text }])
     }
   );
-
   const data = await res.json();
   return data[0]?.translations[0]?.text || text;
 }
 
-/* 🔑 Admin */
+/* Admin */
 const ADMIN_KEY = "123456";
 const params = new URLSearchParams(window.location.search);
 const isAdmin = params.get("admin") === ADMIN_KEY;
@@ -205,15 +205,13 @@ window.deleteStatus = async (id) => {
     await deleteDoc(doc(db, "statuses", id));
 };
 
-/* Realtime posts */
-const q = query(collection(db, "statuses"), orderBy("time", "desc"));
+let allPosts = [];
+let shuffled = false;
 
-onSnapshot(q, snapshot => {
+function renderPosts(dataArray) {
   posts.innerHTML = "";
 
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
-
+  dataArray.forEach(data => {
     const div = document.createElement("div");
     div.className = "post";
 
@@ -240,82 +238,93 @@ onSnapshot(q, snapshot => {
     div.appendChild(contentDiv);
     div.appendChild(timeDiv);
 
-    /* Expand */
     if (needsToggle) {
       const toggle = document.createElement("span");
       toggle.className = "moreBtn";
       toggle.textContent = "Expand";
       let expanded = false;
-
       toggle.onclick = () => {
         expanded = !expanded;
         contentDiv.textContent = expanded ? fullText : shortText + "...";
         toggle.textContent = expanded ? "Shorten" : "Expand";
       };
-
       div.appendChild(toggle);
     }
 
-/* 🌍 Translate */
-const translateBtn = document.createElement("span");
-translateBtn.className = "moreBtn";
-translateBtn.textContent = "Translate";
-
-let translated = false;
-let translatedText = "";
-const userLang = getUserLanguage();
-
-translateBtn.onclick = async () => {
-  try {
-    if (!translated) {
-      translateBtn.textContent = "Translating...";
-
-      const sourceLang = await detectLanguage(fullText);
-
-      // nếu cùng ngôn ngữ → không cần dịch
-      if (sourceLang === userLang) {
-        translateBtn.textContent = "Same language";
-        setTimeout(() => translateBtn.textContent = "Translate", 1500);
-        return;
-      }
-
-      translatedText = await translateText(fullText, userLang);
-      contentDiv.textContent = translatedText;
-
-      translateBtn.textContent = "Original";
-      translated = true;
-    } else {
-      contentDiv.textContent = needsToggle ? shortText + "..." : fullText;
-      translateBtn.textContent = "Translate";
-      translated = false;
-    }
-  } catch (err) {
-    console.error(err);
+    const translateBtn = document.createElement("span");
+    translateBtn.className = "moreBtn";
     translateBtn.textContent = "Translate";
-    alert("Translation failed");
-  }
-};
 
-// ⭐ QUAN TRỌNG: thêm nút vào bài viết
-div.appendChild(translateBtn);
+    let translated = false;
+    const userLang = getUserLanguage();
 
-    /* Admin delete */
+    translateBtn.onclick = async () => {
+      if (!translated) {
+        translateBtn.textContent = "Translating...";
+        const sourceLang = await detectLanguage(fullText);
+
+        if (sourceLang === userLang) {
+          translateBtn.textContent = "Same language";
+          setTimeout(()=>translateBtn.textContent="Translate",1500);
+          return;
+        }
+
+        const translatedText = await translateText(fullText, userLang);
+        contentDiv.textContent = translatedText;
+        translateBtn.textContent = "Original";
+        translated = true;
+      } else {
+        contentDiv.textContent = needsToggle ? shortText + "..." : fullText;
+        translateBtn.textContent = "Translate";
+        translated = false;
+      }
+    };
+
+    div.appendChild(translateBtn);
+
     if (isAdmin) {
       const delBtn = document.createElement("button");
       delBtn.className = "deleteBtn";
       delBtn.textContent = "❌ Delete";
-      delBtn.onclick = () => deleteStatus(docSnap.id);
+      delBtn.onclick = () => deleteStatus(data.id);
       div.appendChild(delBtn);
     }
 
     posts.appendChild(div);
   });
+}
+
+const q = query(collection(db, "statuses"), orderBy("time", "desc"));
+
+onSnapshot(q, snapshot => {
+  allPosts = [];
+  snapshot.forEach(docSnap => {
+    allPosts.push({ id: docSnap.id, ...docSnap.data() });
+  });
+  renderPosts(allPosts);
 });
+
+/* Shuffle */
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+shuffleBtn.onclick = () => {
+  shuffled = !shuffled;
+
+  if (shuffled) {
+    renderPosts(shuffleArray([...allPosts]));
+    shuffleBtn.textContent = "↩ Original";
+  } else {
+    renderPosts(allPosts);
+    shuffleBtn.textContent = "🔀 Shuffle";
+  }
+};
 </script>
 
 </body>
 </html>
-
-
-
-
