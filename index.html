@@ -133,7 +133,7 @@ const db = getFirestore(app);
 /* 🌍 Azure Translator */
 const AZURE_KEY = "6rJ6HYTwtmUotxFYAPRfsyQgJGAhz1G434PD1d8CcS0LC4aYxB7bJQQJ99CBAC3pKaRXJ3w3AAAbACOGZpu7";
 const AZURE_REGION = "eastasia";
-const AZURE_ENDPOINT = "https://fourth.cognitiveservices.azure.com/";
+const AZURE_ENDPOINT = "https://api.cognitive.microsofttranslator.com";
 
 async function translateToEnglish(text) {
   const res = await fetch(
@@ -270,3 +270,4 @@ onSnapshot(q, snapshot => {
 
 </body>
 </html>
+
