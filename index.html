@@ -135,9 +135,15 @@ const AZURE_KEY = "6rJ6HYTwtmUotxFYAPRfsyQgJGAhz1G434PD1d8CcS0LC4aYxB7bJQQJ99CBA
 const AZURE_REGION = "eastasia";
 const AZURE_ENDPOINT = "https://api.cognitive.microsofttranslator.com";
 
-async function translateToEnglish(text) {
+// 🌍 lấy ngôn ngữ người truy cập
+function getUserLanguage() {
+  return (navigator.language || "en").split("-")[0];
+}
+
+// 🔍 detect ngôn ngữ văn bản
+async function detectLanguage(text) {
   const res = await fetch(
-    AZURE_ENDPOINT + "/translate?api-version=3.0&to=en",
+    AZURE_ENDPOINT + "/detect?api-version=3.0",
     {
       method: "POST",
       headers: {
@@ -148,8 +154,28 @@ async function translateToEnglish(text) {
       body: JSON.stringify([{ Text: text }])
     }
   );
+
   const data = await res.json();
-  return data[0].translations[0].text;
+  return data[0]?.language || "en";
+}
+
+// 🌐 dịch văn bản
+async function translateText(text, toLang) {
+  const res = await fetch(
+    AZURE_ENDPOINT + `/translate?api-version=3.0&to=${toLang}`,
+    {
+      method: "POST",
+      headers: {
+        "Ocp-Apim-Subscription-Key": AZURE_KEY,
+        "Ocp-Apim-Subscription-Region": AZURE_REGION,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify([{ Text: text }])
+    }
+  );
+
+  const data = await res.json();
+  return data[0]?.translations[0]?.text || text;
 }
 
 /* 🔑 Admin */
@@ -230,29 +256,44 @@ onSnapshot(q, snapshot => {
       div.appendChild(toggle);
     }
 
-    /* 🌍 Translate */
-    const translateBtn = document.createElement("span");
-    translateBtn.className = "moreBtn";
-    translateBtn.textContent = "Translate";
+  /* 🌍 Translate */
+const translateBtn = document.createElement("span");
+translateBtn.className = "moreBtn";
+translateBtn.textContent = "Translate";
 
-    let translated = false;
-    let translatedText = "";
+let translated = false;
+let translatedText = "";
+const userLang = getUserLanguage();
 
-    translateBtn.onclick = async () => {
-      if (!translated) {
-        translateBtn.textContent = "Translating...";
-        translatedText = await translateToEnglish(fullText);
-        contentDiv.textContent = translatedText;
-        translateBtn.textContent = "Original";
-        translated = true;
-      } else {
-        contentDiv.textContent = needsToggle ? shortText + "..." : fullText;
-        translateBtn.textContent = "Translate";
-        translated = false;
+translateBtn.onclick = async () => {
+  try {
+    if (!translated) {
+      translateBtn.textContent = "Translating...";
+
+      const sourceLang = await detectLanguage(fullText);
+
+      // nếu cùng ngôn ngữ → không cần dịch
+      if (sourceLang === userLang) {
+        translateBtn.textContent = "Same language";
+        return;
       }
-    };
 
-    div.appendChild(translateBtn);
+      translatedText = await translateText(fullText, userLang);
+      contentDiv.textContent = translatedText;
+
+      translateBtn.textContent = "Original";
+      translated = true;
+    } else {
+      contentDiv.textContent = needsToggle ? shortText + "..." : fullText;
+      translateBtn.textContent = "Translate";
+      translated = false;
+    }
+  } catch (err) {
+    console.error(err);
+    translateBtn.textContent = "Translate";
+    alert("Translation failed");
+  }
+};
 
     /* Admin delete */
     if (isAdmin) {
@@ -270,5 +311,6 @@ onSnapshot(q, snapshot => {
 
 </body>
 </html>
+
 
 
