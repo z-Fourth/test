@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bảng trạng thái ẩn danh</title>
+<title>Anonymous Status Board</title>
 
 <style>
 *{box-sizing:border-box}
@@ -23,11 +23,6 @@ body{
   max-width:600px;
   padding:20px;
   border-radius:20px;
-  overflow:hidden;
-}
-
-h2{
-  margin-top:0;
 }
 
 input, textarea{
@@ -39,10 +34,7 @@ input, textarea{
   margin-bottom:10px;
 }
 
-textarea{
-  resize:none;
-  height:100px;
-}
+textarea{ resize:none; height:100px; }
 
 button{
   width:100%;
@@ -55,10 +47,6 @@ button{
   cursor:pointer;
 }
 
-button:hover{
-  background:#5941c9;
-}
-
 .post{
   background:#f1f1f1;
   padding:15px;
@@ -66,16 +54,8 @@ button:hover{
   margin-top:12px;
 }
 
-.name{
-  font-weight:bold;
-  margin-bottom:6px;
-}
-
-.time{
-  font-size:12px;
-  color:gray;
-  margin-top:6px;
-}
+.name{font-weight:bold;margin-bottom:6px;}
+.time{font-size:12px;color:gray;margin-top:6px;}
 
 .deleteBtn{
   margin-top:8px;
@@ -88,27 +68,28 @@ button:hover{
   font-size:13px;
 }
 
-.deleteBtn:hover{
-  background:#e60000;
-}
-
-.moreBtn{
+.moreBtn,.translateBtn{
   color:#6a5acd;
   cursor:pointer;
   font-size:14px;
   margin-top:6px;
   display:inline-block;
 }
+
+.translated{
+  margin-top:6px;
+  font-style:italic;
+}
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>💬 Bảng trạng thái ẩn danh</h2>
+  <h2>💬 Anonymous Status Board</h2>
 
-  <input id="nicknameInput" placeholder="Nickname (không bắt buộc)">
-  <textarea id="statusInput" placeholder="Ý tưởng của bạn"></textarea>
-  <button onclick="postStatus()">Đăng</button>
+  <input id="nicknameInput" placeholder="Nickname (optional)">
+  <textarea id="statusInput" placeholder="What's on your mind?"></textarea>
+  <button onclick="postStatus()">Post</button>
 
   <div id="posts"></div>
 </div>
@@ -117,92 +98,116 @@ button:hover{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* 🔥 DÁN CONFIG FIREBASE */
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "AIzaSyC3Yu_mU38Ru7PIEGR-2rNSo5FoelowrUQ",
-  authDomain: "tuanhh-f16a9.firebaseapp.com",
-  projectId: "tuanhh-f16a9",
-  storageBucket: "tuanhh-f16a9.firebasestorage.app",
-  messagingSenderId: "71969140903",
-  appId: "1:71969140903:web:49986baacfbbd1f9e8ab82"
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_ID",
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔑 ADMIN */
-const ADMIN_KEY = "123456"; // đổi mã bí mật
-const params = new URLSearchParams(window.location.search);
-const isAdmin = params.get("admin") === ADMIN_KEY;
+/* 👑 ADMIN */
+const ADMIN_KEY="123456";
+const params=new URLSearchParams(window.location.search);
+const isAdmin=params.get("admin")===ADMIN_KEY;
 
-/* 🚀 ĐĂNG STATUS */
-window.postStatus = async function(){
-  const text = document.getElementById("statusInput").value.trim();
-  let nickname = document.getElementById("nicknameInput").value.trim();
+/* 🌍 user language */
+const userLang=navigator.language.slice(0,2);
 
-  if(text === ""){
-    alert("Hãy viết gì đó!");
-    return;
-  }
+/* 🌐 translate */
+async function translateText(text,target){
+  const res=await fetch("https://libretranslate.de/translate",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json"},
+    body:JSON.stringify({
+      q:text,
+      source:"auto",
+      target:target,
+      format:"text"
+    })
+  });
+  const data=await res.json();
+  return data.translatedText;
+}
 
-  if(nickname === "") nickname = "Ẩn danh";
+/* post status */
+window.postStatus=async()=>{
+  const text=document.getElementById("statusInput").value.trim();
+  let nickname=document.getElementById("nicknameInput").value.trim();
+
+  if(text===""){ alert("Please write something!"); return; }
+  if(nickname==="") nickname="Anonymous";
 
   await addDoc(collection(db,"statuses"),{
     text,
     nickname,
-    time: serverTimestamp()
+    time:serverTimestamp()
   });
 
   document.getElementById("statusInput").value="";
 }
 
-/* 🗑 XÓA STATUS */
-window.deleteStatus = async function(id){
-  if(confirm("Xóa bài viết này?")){
+/* delete post (admin) */
+window.deleteStatus=async(id)=>{
+  if(confirm("Delete this post?")){
     await deleteDoc(doc(db,"statuses",id));
   }
 }
 
-/* 👀 HIỂN THỊ REALTIME */
-const q = query(collection(db,"statuses"), orderBy("time","desc"));
+/* realtime display */
+const q=query(collection(db,"statuses"),orderBy("time","desc"));
 
 onSnapshot(q,(snapshot)=>{
-  const posts = document.getElementById("posts");
+  const posts=document.getElementById("posts");
   posts.innerHTML="";
 
   snapshot.forEach(docSnap=>{
-    const data = docSnap.data();
-    const div = document.createElement("div");
+    const data=docSnap.data();
+    const fullText=data.text;
+    const shortText=fullText.substring(0,200);
+    const needsToggle=fullText.length>200;
+
+    const div=document.createElement("div");
     div.className="post";
 
-    const time = data.time?.toDate().toLocaleString() ?? "";
+    const time=data.time?.toDate().toLocaleString() ?? "";
 
-    const fullText = data.text;
-    const shortText = fullText.substring(0,200);
-
-    const needsToggle = fullText.length > 200;
-
-    div.innerHTML = `
-      <div class="name">${data.nickname ?? "Ẩn danh"}</div>
-      <div class="content">${needsToggle ? shortText + "..." : fullText}</div>
-      ${needsToggle ? `<span class="moreBtn">Xem thêm</span>` : ``}
+    div.innerHTML=`
+      <div class="name">${data.nickname}</div>
+      <div class="content">${needsToggle?shortText+"...":fullText}</div>
+      ${needsToggle?'<span class="moreBtn">Read more</span>':``}
+      <div class="translated"></div>
+      <span class="translateBtn">🌐 Translate</span>
       <div class="time">${time}</div>
-      ${isAdmin ? `<button class="deleteBtn">❌ Xóa</button>` : ``}
+      ${isAdmin?'<button class="deleteBtn">❌ Delete</button>':``}
     `;
 
-    /* nút xem thêm */
+    /* read more */
     if(needsToggle){
-      const moreBtn = div.querySelector(".moreBtn");
-      const content = div.querySelector(".content");
-      let expanded = false;
-
-      moreBtn.onclick = ()=>{
-        expanded = !expanded;
-        content.textContent = expanded ? fullText : shortText + "...";
-        moreBtn.textContent = expanded ? "Thu gọn" : "Xem thêm";
+      const moreBtn=div.querySelector(".moreBtn");
+      const content=div.querySelector(".content");
+      let expanded=false;
+      moreBtn.onclick=()=>{
+        expanded=!expanded;
+        content.textContent=expanded?fullText:shortText+"...";
+        moreBtn.textContent=expanded?"Show less":"Read more";
       }
     }
 
-    /* nút xóa */
+    /* translate */
+    const tBtn=div.querySelector(".translateBtn");
+    const tBox=div.querySelector(".translated");
+
+    tBtn.onclick=async()=>{
+      tBtn.textContent="Translating...";
+      const translated=await translateText(fullText,userLang);
+      tBox.textContent=translated;
+      tBtn.style.display="none";
+    }
+
+    /* delete */
     if(isAdmin){
       div.querySelector(".deleteBtn").onclick=()=>{
         deleteStatus(docSnap.id);
