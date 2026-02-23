@@ -256,7 +256,7 @@ onSnapshot(q, snapshot => {
       div.appendChild(toggle);
     }
 
-  /* 🌍 Translate */
+/* 🌍 Translate */
 const translateBtn = document.createElement("span");
 translateBtn.className = "moreBtn";
 translateBtn.textContent = "Translate";
@@ -275,6 +275,7 @@ translateBtn.onclick = async () => {
       // nếu cùng ngôn ngữ → không cần dịch
       if (sourceLang === userLang) {
         translateBtn.textContent = "Same language";
+        setTimeout(() => translateBtn.textContent = "Translate", 1500);
         return;
       }
 
@@ -295,6 +296,9 @@ translateBtn.onclick = async () => {
   }
 };
 
+// ⭐ QUAN TRỌNG: thêm nút vào bài viết
+div.appendChild(translateBtn);
+
     /* Admin delete */
     if (isAdmin) {
       const delBtn = document.createElement("button");
@@ -311,6 +315,7 @@ translateBtn.onclick = async () => {
 
 </body>
 </html>
+
 
 
 
