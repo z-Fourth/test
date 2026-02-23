@@ -1,12 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Status Board</title>
+
+<style>
+body{
+  font-family: Arial;
+  max-width:600px;
+  margin:auto;
+  padding:20px;
+}
+
+input, textarea{
+  width:100%;
+  box-sizing:border-box;
+  padding:10px;
+  margin-top:6px;
+}
+
+button{
+  padding:10px 15px;
+  margin-top:8px;
+  cursor:pointer;
+}
+
+.post{
+  border:1px solid #ddd;
+  padding:10px;
+  margin-top:15px;
+  border-radius:8px;
+}
+
+.moreBtn{
+  color:blue;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.deleteBtn{
+  color:red;
+  cursor:pointer;
+  font-size:14px;
+  margin-left:10px;
+}
+</style>
+
+</head>
+<body>
+
+<h2>Anonymous Status Board</h2>
+
+<input id="nicknameInput" placeholder="Nickname (optional)">
+
+<textarea id="statusInput" placeholder="Write something..."></textarea>
+
+<button onclick="postStatus()">Post</button>
+<button onclick="adminLogin()">Admin</button>
+
+<hr>
+
+<div id="statusList"></div>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, addDoc,
-  onSnapshot, query, orderBy, serverTimestamp,
+  query, orderBy, onSnapshot,
   deleteDoc, doc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyC3Yu_mU38Ru7PIEGR-2rNSo5FoelowrUQ",
   authDomain: "tuanhh-f16a9.firebaseapp.com",
@@ -19,88 +82,56 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔐 ADMIN */
-const ADMIN_PASSWORD = "123456";
 let isAdmin = false;
 
-/* ⚡ CACHE TRANSLATION */
-const translateCache = {};
-
-/* 📝 POST STATUS */
-window.postStatus = async function(){
-  const text = document.getElementById("statusInput").value.trim();
-  const nickname = document.getElementById("nicknameInput").value.trim() || "Anonymous";
-
-  if(!text) return alert("Please enter content!");
-
-  await addDoc(collection(db,"statuses"),{
-    text,
-    nickname,
-    time: serverTimestamp()
-  });
-
-  document.getElementById("statusInput").value="";
-};
-
-/* ❌ DELETE POST (ADMIN) */
-window.deleteStatus = async function(id){
-  if(confirm("Delete this post?")){
-    await deleteDoc(doc(db,"statuses",id));
-  }
-};
-
-/* 🔐 ADMIN LOGIN */
 window.adminLogin = function(){
   const pass = prompt("Enter admin password:");
-  if(pass === ADMIN_PASSWORD){
+  if(pass === "123"){
     isAdmin = true;
-    alert("Admin mode enabled");
+    alert("Admin mode ON");
   }
-};
+}
 
-/* 🌐 TRANSLATE TO ENGLISH */
-window.translateText = async function(button, originalText){
-
-  const cacheKey = originalText;
-
-  if(translateCache[cacheKey]){
-    button.previousElementSibling.innerHTML +=
-      `<br><em>${translateCache[cacheKey]}</em>`;
-    button.remove();
-    return;
-  }
-
-  button.innerText = "Translating...";
-
+// dịch nhanh sang tiếng Anh
+async function translateToEnglish(text){
   try{
-    const res = await fetch("https://translate.argosopentech.com/translate", {
+    const res = await fetch("https://libretranslate.de/translate",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
-        q: originalText,
-        source: "auto",
-        target: "en",
-        format: "text"
+        q:text,
+        source:"auto",
+        target:"en",
+        format:"text"
       })
     });
-
     const data = await res.json();
-    const translated = data.translatedText;
-
-    translateCache[cacheKey] = translated;
-
-    button.previousElementSibling.innerHTML +=
-      `<br><em>${translated}</em>`;
-
-    button.remove();
-
-  }catch(e){
-    button.innerText = "Error";
+    return data.translatedText;
+  }catch{
+    return text;
   }
-};
+}
 
-/* 📡 REALTIME LISTENER */
-const q = query(collection(db,"statuses"), orderBy("time","desc"));
+window.postStatus = async function(){
+  const text = document.getElementById("statusInput").value.trim();
+  const nick = document.getElementById("nicknameInput").value.trim();
+
+  if(!text) return alert("Write something!");
+
+  const translated = await translateToEnglish(text);
+
+  await addDoc(collection(db,"posts"),{
+    nickname: nick || "Anonymous",
+    original: text,
+    translated: translated,
+    time: Date.now()
+  });
+
+  document.getElementById("statusInput").value="";
+}
+
+// hiển thị bài viết
+const q = query(collection(db,"posts"), orderBy("time","desc"));
 
 onSnapshot(q,(snapshot)=>{
   const list = document.getElementById("statusList");
@@ -108,22 +139,52 @@ onSnapshot(q,(snapshot)=>{
 
   snapshot.forEach(docSnap=>{
     const data = docSnap.data();
+    const id = docSnap.id;
 
     const div = document.createElement("div");
-    div.className="status";
+    div.className="post";
+
+    let shortText = data.translated;
+    let fullText = data.translated;
+
+    if(fullText.length > 120){
+      shortText = fullText.slice(0,120) + "...";
+    }
 
     div.innerHTML = `
-      <strong>${data.nickname}</strong>
-      <p class="statusText">${data.text}</p>
-
-      <button onclick="translateText(this, \`${data.text}\`)">
-        🌐 Translate
-      </button>
-
-      ${isAdmin ? `<button onclick="deleteStatus('${docSnap.id}')">❌ Delete</button>` : ``}
+      <b>${data.nickname}</b><br>
+      <span class="text">${shortText}</span>
+      ${fullText.length>120 ? `<div class="moreBtn">Show more</div>` : ""}
+      ${isAdmin ? `<span class="deleteBtn">Delete</span>` : ""}
     `;
+
+    // mở rộng nội dung
+    if(fullText.length>120){
+      div.querySelector(".moreBtn").onclick = function(){
+        const span = div.querySelector(".text");
+        if(span.innerText === shortText){
+          span.innerText = fullText;
+          this.innerText = "Show less";
+        }else{
+          span.innerText = shortText;
+          this.innerText = "Show more";
+        }
+      }
+    }
+
+    // xoá bài
+    if(isAdmin){
+      div.querySelector(".deleteBtn").onclick = async ()=>{
+        if(confirm("Delete this post?")){
+          await deleteDoc(doc(db,"posts",id));
+        }
+      }
+    }
 
     list.appendChild(div);
   });
 });
 </script>
+
+</body>
+</html>
