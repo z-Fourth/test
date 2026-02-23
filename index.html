@@ -1,73 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Status Board</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anonymous Status Board</title>
 
 <style>
 body{
-  font-family: Arial;
-  max-width:600px;
-  margin:auto;
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#6a5acd,#836fff);
+  display:flex;
+  justify-content:center;
   padding:20px;
+}
+
+.container{
+  width:100%;
+  max-width:500px;
+  background:white;
+  padding:20px;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.15);
+}
+
+h2{
+  margin-top:0;
 }
 
 input, textarea{
   width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-size:14px;
   box-sizing:border-box;
-  padding:10px;
-  margin-top:6px;
+}
+
+textarea{
+  resize:none;
+  height:90px;
 }
 
 button{
-  padding:10px 15px;
-  margin-top:8px;
+  width:100%;
+  margin-top:12px;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  background:#6a5acd;
+  color:white;
   cursor:pointer;
+}
+
+button:hover{
+  background:#5a4be0;
 }
 
 .post{
-  border:1px solid #ddd;
-  padding:10px;
-  margin-top:15px;
-  border-radius:8px;
+  background:#eee;
+  padding:12px;
+  border-radius:10px;
+  margin-top:12px;
 }
 
-.moreBtn{
-  color:blue;
-  cursor:pointer;
-  font-size:14px;
+.name{
+  font-weight:bold;
 }
 
-.deleteBtn{
-  color:red;
-  cursor:pointer;
-  font-size:14px;
-  margin-left:10px;
+.time{
+  font-size:12px;
+  color:#666;
+  margin-top:6px;
 }
 </style>
-
 </head>
 <body>
 
-<h2>Anonymous Status Board</h2>
+<div class="container">
+  <h2>💬 Anonymous Status Board</h2>
 
-<input id="nicknameInput" placeholder="Nickname (optional)">
+  <input id="nickname" placeholder="Nickname (optional)">
+  <textarea id="content" placeholder="Your thoughts..."></textarea>
+  <button onclick="addPost()">Post</button>
 
-<textarea id="statusInput" placeholder="Write something..."></textarea>
-
-<button onclick="postStatus()">Post</button>
-<button onclick="adminLogin()">Admin</button>
-
-<hr>
-
-<div id="statusList"></div>
+  <div id="statusList"></div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, addDoc,
-  query, orderBy, onSnapshot,
-  deleteDoc, doc
+  query, orderBy, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -82,22 +108,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let isAdmin = false;
+const list = document.getElementById("statusList");
 
-window.adminLogin = function(){
-  const pass = prompt("Enter admin password:");
-  if(pass === "123"){
-    isAdmin = true;
-    alert("Admin mode ON");
-  }
-}
-
-// dịch nhanh sang tiếng Anh
-async function translateToEnglish(text){
+async function translateText(text){
   try{
     const res = await fetch("https://libretranslate.de/translate",{
       method:"POST",
-      headers:{ "Content-Type":"application/json" },
+      headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
         q:text,
         source:"auto",
@@ -112,76 +129,43 @@ async function translateToEnglish(text){
   }
 }
 
-window.postStatus = async function(){
-  const text = document.getElementById("statusInput").value.trim();
-  const nick = document.getElementById("nicknameInput").value.trim();
+window.addPost = async function(){
+  const nickname = document.getElementById("nickname").value || "Anonymous";
+  const content = document.getElementById("content").value;
 
-  if(!text) return alert("Write something!");
+  if(!content.trim()) return;
 
-  const translated = await translateToEnglish(text);
+  const translated = await translateText(content);
 
   await addDoc(collection(db,"posts"),{
-    nickname: nick || "Anonymous",
-    original: text,
-    translated: translated,
-    time: Date.now()
+    nickname,
+    content,
+    translated,
+    time: serverTimestamp()
   });
 
-  document.getElementById("statusInput").value="";
+  document.getElementById("content").value="";
 }
 
-// hiển thị bài viết
 const q = query(collection(db,"posts"), orderBy("time","desc"));
 
-onSnapshot(q,(snapshot)=>{
-  const list = document.getElementById("statusList");
+onSnapshot(q, snapshot=>{
+  if(!list) return;
+
   list.innerHTML="";
 
-  snapshot.forEach(docSnap=>{
-    const data = docSnap.data();
-    const id = docSnap.id;
+  snapshot.forEach(doc=>{
+    const data = doc.data();
+    const time = data.time?.toDate().toLocaleString() || "";
 
-    const div = document.createElement("div");
-    div.className="post";
-
-    let shortText = data.translated;
-    let fullText = data.translated;
-
-    if(fullText.length > 120){
-      shortText = fullText.slice(0,120) + "...";
-    }
-
-    div.innerHTML = `
-      <b>${data.nickname}</b><br>
-      <span class="text">${shortText}</span>
-      ${fullText.length>120 ? `<div class="moreBtn">Show more</div>` : ""}
-      ${isAdmin ? `<span class="deleteBtn">Delete</span>` : ""}
+    list.innerHTML += `
+      <div class="post">
+        <div class="name">${data.nickname}</div>
+        <div>${data.content}</div>
+        <div style="opacity:.7">${data.translated || ""}</div>
+        <div class="time">${time}</div>
+      </div>
     `;
-
-    // mở rộng nội dung
-    if(fullText.length>120){
-      div.querySelector(".moreBtn").onclick = function(){
-        const span = div.querySelector(".text");
-        if(span.innerText === shortText){
-          span.innerText = fullText;
-          this.innerText = "Show less";
-        }else{
-          span.innerText = shortText;
-          this.innerText = "Show more";
-        }
-      }
-    }
-
-    // xoá bài
-    if(isAdmin){
-      div.querySelector(".deleteBtn").onclick = async ()=>{
-        if(confirm("Delete this post?")){
-          await deleteDoc(doc(db,"posts",id));
-        }
-      }
-    }
-
-    list.appendChild(div);
   });
 });
 </script>
