@@ -7,7 +7,6 @@
 
 <style>
 *{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:Arial, Helvetica, sans-serif;
@@ -16,7 +15,6 @@ body{
   justify-content:center;
   padding:20px;
 }
-
 .container{
   background:white;
   width:100%;
@@ -24,7 +22,6 @@ body{
   padding:20px;
   border-radius:20px;
 }
-
 input, textarea{
   width:100%;
   padding:14px;
@@ -33,9 +30,7 @@ input, textarea{
   font-size:16px;
   margin-bottom:10px;
 }
-
-textarea{ resize:none; height:100px; }
-
+textarea{resize:none;height:100px;}
 button{
   width:100%;
   padding:14px;
@@ -46,17 +41,14 @@ button{
   font-size:18px;
   cursor:pointer;
 }
-
 .post{
   background:#f1f1f1;
   padding:15px;
   border-radius:12px;
   margin-top:12px;
 }
-
 .name{font-weight:bold;margin-bottom:6px;}
 .time{font-size:12px;color:gray;margin-top:6px;}
-
 .deleteBtn{
   margin-top:8px;
   background:#ff4d4d;
@@ -65,9 +57,7 @@ button{
   padding:6px 10px;
   border-radius:6px;
   cursor:pointer;
-  font-size:13px;
 }
-
 .moreBtn,.translateBtn{
   color:#6a5acd;
   cursor:pointer;
@@ -75,7 +65,6 @@ button{
   margin-top:6px;
   display:inline-block;
 }
-
 .translated{
   margin-top:6px;
   font-style:italic;
@@ -98,9 +87,8 @@ button{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* 🔥 FIREBASE CONFIG */
+/* Firebase */
 const firebaseConfig = {
- const firebaseConfig = {
   apiKey: "AIzaSyC3Yu_mU38Ru7PIEGR-2rNSo5FoelowrUQ",
   authDomain: "tuanhh-f16a9.firebaseapp.com",
   projectId: "tuanhh-f16a9",
@@ -108,35 +96,38 @@ const firebaseConfig = {
   messagingSenderId: "71969140903",
   appId: "1:71969140903:web:49986baacfbbd1f9e8ab82"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 👑 ADMIN */
+/* ADMIN */
 const ADMIN_KEY="123456";
 const params=new URLSearchParams(window.location.search);
 const isAdmin=params.get("admin")===ADMIN_KEY;
 
-/* 🌍 user language */
-const userLang=navigator.language.slice(0,2);
+/* 🌍 USER LANGUAGE */
+const userLang = navigator.language.slice(0,2);
 
-/* 🌐 translate */
+/* ⚡ GOOGLE TRANSLATE */
+const GOOGLE_API_KEY="YOUR_API_KEY";
+
 async function translateText(text,target){
-  const res=await fetch("https://libretranslate.de/translate",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json"},
-    body:JSON.stringify({
-      q:text,
-      source:"auto",
-      target:target,
-      format:"text"
-    })
-  });
-  const data=await res.json();
-  return data.translatedText;
+  const res = await fetch(
+    `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_API_KEY}`,
+    {
+      method:"POST",
+      headers:{ "Content-Type":"application/json"},
+      body: JSON.stringify({
+        q:text,
+        target:target,
+        format:"text"
+      })
+    }
+  );
+  const data = await res.json();
+  return data.data.translations[0].translatedText;
 }
 
-/* post status */
+/* POST STATUS */
 window.postStatus=async()=>{
   const text=document.getElementById("statusInput").value.trim();
   let nickname=document.getElementById("nicknameInput").value.trim();
@@ -153,14 +144,14 @@ window.postStatus=async()=>{
   document.getElementById("statusInput").value="";
 }
 
-/* delete post (admin) */
+/* DELETE */
 window.deleteStatus=async(id)=>{
   if(confirm("Delete this post?")){
     await deleteDoc(doc(db,"statuses",id));
   }
 }
 
-/* realtime display */
+/* REALTIME */
 const q=query(collection(db,"statuses"),orderBy("time","desc"));
 
 onSnapshot(q,(snapshot)=>{
@@ -207,7 +198,7 @@ onSnapshot(q,(snapshot)=>{
     tBtn.onclick=async()=>{
       tBtn.textContent="Translating...";
       const translated=await translateText(fullText,userLang);
-      tBox.textContent=translated;
+      tBox.innerHTML=translated;
       tBtn.style.display="none";
     }
 
@@ -225,4 +216,3 @@ onSnapshot(q,(snapshot)=>{
 
 </body>
 </html>
-
