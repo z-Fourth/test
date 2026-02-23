@@ -7,7 +7,6 @@ import {
 
 // 🔹 CẤU HÌNH FIREBASE
 const firebaseConfig = {
-  const firebaseConfig = {
   apiKey: "AIzaSyC3Yu_mU38Ru7PIEGR-2rNSo5FoelowrUQ",
   authDomain: "tuanhh-f16a9.firebaseapp.com",
   projectId: "tuanhh-f16a9",
@@ -20,7 +19,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // 🔹 ADMIN PASSWORD
-const ADMIN_PASSWORD = "123456"; 
+const ADMIN_PASSWORD = "123456";
 let isAdmin = false;
 
 // 🔹 CACHE BẢN DỊCH (tăng tốc)
@@ -49,7 +48,7 @@ window.deleteStatus = async function(id){
   }
 };
 
-// 🔹 ĐĂNG NHẬP ADMIN
+// 🔹 ADMIN LOGIN
 window.adminLogin = function(){
   const pass = prompt("Enter admin password:");
   if(pass === ADMIN_PASSWORD){
@@ -58,15 +57,16 @@ window.adminLogin = function(){
   }
 };
 
-// 🔹 DỊCH NHANH (LibreTranslate)
+// 🔹 DỊCH SANG TIẾNG ANH
 window.translateText = async function(button, originalText){
 
-  const lang = "en";   // 👉 luôn dịch sang tiếng Anh
-  const cacheKey = originalText + lang;
+  const targetLang = "en";
+  const cacheKey = originalText + targetLang;
 
   // dùng cache nếu đã dịch
   if(translateCache[cacheKey]){
-    button.previousElementSibling.innerText = translateCache[cacheKey];
+    button.previousElementSibling.innerHTML +=
+      `<br><em>${translateCache[cacheKey]}</em>`;
     button.remove();
     return;
   }
@@ -80,7 +80,7 @@ window.translateText = async function(button, originalText){
       body: JSON.stringify({
         q: originalText,
         source: "auto",
-        target: lang,
+        target: targetLang,
         format: "text"
       })
     });
@@ -90,7 +90,10 @@ window.translateText = async function(button, originalText){
 
     translateCache[cacheKey] = translated;
 
-    button.previousElementSibling.innerText = translated;
+    // hiển thị bản dịch dưới bản gốc
+    button.previousElementSibling.innerHTML +=
+      `<br><em>${translated}</em>`;
+
     button.remove();
 
   }catch(err){
@@ -126,4 +129,3 @@ onSnapshot(q,(snapshot)=>{
   });
 });
 </script>
-
