@@ -1,94 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Anonymous Status Board</title>
-
-<style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial, Helvetica, sans-serif;
-  background:linear-gradient(135deg,#6a5acd,#7b68ee);
-  display:flex;
-  justify-content:center;
-  padding:20px;
-}
-.container{
-  background:white;
-  width:100%;
-  max-width:600px;
-  padding:20px;
-  border-radius:20px;
-}
-input, textarea{
-  width:100%;
-  padding:14px;
-  border-radius:12px;
-  border:1px solid #ccc;
-  font-size:16px;
-  margin-bottom:10px;
-}
-textarea{resize:none;height:100px;}
-button{
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:12px;
-  background:#6a5acd;
-  color:white;
-  font-size:18px;
-  cursor:pointer;
-}
-.post{
-  background:#f1f1f1;
-  padding:15px;
-  border-radius:12px;
-  margin-top:12px;
-}
-.name{font-weight:bold;margin-bottom:6px;}
-.time{font-size:12px;color:gray;margin-top:6px;}
-.deleteBtn{
-  margin-top:8px;
-  background:#ff4d4d;
-  border:none;
-  color:white;
-  padding:6px 10px;
-  border-radius:6px;
-  cursor:pointer;
-}
-.moreBtn,.translateBtn{
-  color:#6a5acd;
-  cursor:pointer;
-  font-size:14px;
-  margin-top:6px;
-  display:inline-block;
-}
-.translated{
-  margin-top:6px;
-  font-style:italic;
-}
-</style>
-</head>
-<body>
-
-<div class="container">
-  <h2>💬 Anonymous Status Board</h2>
-
-  <input id="nicknameInput" placeholder="Nickname (optional)">
-  <textarea id="statusInput" placeholder="What's on your mind?"></textarea>
-  <button onclick="postStatus()">Post</button>
-
-  <div id="posts"></div>
-</div>
-
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, addDoc,
+  onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* Firebase */
+// 🔹 CẤU HÌNH FIREBASE
 const firebaseConfig = {
+  const firebaseConfig = {
   apiKey: "AIzaSyC3Yu_mU38Ru7PIEGR-2rNSo5FoelowrUQ",
   authDomain: "tuanhh-f16a9.firebaseapp.com",
   projectId: "tuanhh-f16a9",
@@ -96,123 +15,113 @@ const firebaseConfig = {
   messagingSenderId: "71969140903",
   appId: "1:71969140903:web:49986baacfbbd1f9e8ab82"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* ADMIN */
-const ADMIN_KEY="123456";
-const params=new URLSearchParams(window.location.search);
-const isAdmin=params.get("admin")===ADMIN_KEY;
+// 🔹 ADMIN PASSWORD
+const ADMIN_PASSWORD = "123456"; 
+let isAdmin = false;
 
-/* 🌍 USER LANGUAGE */
-const userLang = navigator.language.slice(0,2);
+// 🔹 CACHE BẢN DỊCH (tăng tốc)
+const translateCache = {};
 
-/* ⚡ GOOGLE TRANSLATE */
-const GOOGLE_API_KEY="YOUR_API_KEY";
+// 🔹 ĐĂNG BÀI
+window.postStatus = async function(){
+  const text = document.getElementById("statusInput").value.trim();
+  const nickname = document.getElementById("nicknameInput").value.trim() || "Anonymous";
 
-async function translateText(text,target){
-  const res = await fetch(
-    `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_API_KEY}`,
-    {
-      method:"POST",
-      headers:{ "Content-Type":"application/json"},
-      body: JSON.stringify({
-        q:text,
-        target:target,
-        format:"text"
-      })
-    }
-  );
-  const data = await res.json();
-  return data.data.translations[0].translatedText;
-}
-
-/* POST STATUS */
-window.postStatus=async()=>{
-  const text=document.getElementById("statusInput").value.trim();
-  let nickname=document.getElementById("nicknameInput").value.trim();
-
-  if(text===""){ alert("Please write something!"); return; }
-  if(nickname==="") nickname="Anonymous";
+  if(!text) return alert("Please enter content!");
 
   await addDoc(collection(db,"statuses"),{
     text,
     nickname,
-    time:serverTimestamp()
+    time: serverTimestamp()
   });
 
   document.getElementById("statusInput").value="";
-}
+};
 
-/* DELETE */
-window.deleteStatus=async(id)=>{
+// 🔹 XÓA BÀI (ADMIN)
+window.deleteStatus = async function(id){
   if(confirm("Delete this post?")){
     await deleteDoc(doc(db,"statuses",id));
   }
-}
+};
 
-/* REALTIME */
-const q=query(collection(db,"statuses"),orderBy("time","desc"));
+// 🔹 ĐĂNG NHẬP ADMIN
+window.adminLogin = function(){
+  const pass = prompt("Enter admin password:");
+  if(pass === ADMIN_PASSWORD){
+    isAdmin = true;
+    alert("Admin mode enabled");
+  }
+};
+
+// 🔹 DỊCH NHANH (LibreTranslate)
+window.translateText = async function(button, originalText){
+
+  const lang = navigator.language.slice(0,2) || "en";
+  const cacheKey = originalText + lang;
+
+  if(translateCache[cacheKey]){
+    button.previousElementSibling.innerText = translateCache[cacheKey];
+    button.remove();
+    return;
+  }
+
+  button.innerText = "Translating...";
+
+  try{
+    const res = await fetch("https://translate.argosopentech.com/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        q: originalText,
+        source: "auto",
+        target: lang,
+        format: "text"
+      })
+    });
+
+    const data = await res.json();
+    const translated = data.translatedText;
+
+    translateCache[cacheKey] = translated;
+
+    button.previousElementSibling.innerText = translated;
+    button.remove();
+
+  }catch(err){
+    button.innerText = "Error";
+  }
+};
+
+// 🔹 HIỂN THỊ BÀI VIẾT
+const q = query(collection(db,"statuses"), orderBy("time","desc"));
 
 onSnapshot(q,(snapshot)=>{
-  const posts=document.getElementById("posts");
-  posts.innerHTML="";
+  const list = document.getElementById("statusList");
+  list.innerHTML="";
 
   snapshot.forEach(docSnap=>{
-    const data=docSnap.data();
-    const fullText=data.text;
-    const shortText=fullText.substring(0,200);
-    const needsToggle=fullText.length>200;
+    const data = docSnap.data();
 
-    const div=document.createElement("div");
-    div.className="post";
+    const div = document.createElement("div");
+    div.className="status";
 
-    const time=data.time?.toDate().toLocaleString() ?? "";
+    div.innerHTML = `
+      <strong>${data.nickname}</strong>
+      <p class="statusText">${data.text}</p>
 
-    div.innerHTML=`
-      <div class="name">${data.nickname}</div>
-      <div class="content">${needsToggle?shortText+"...":fullText}</div>
-      ${needsToggle?'<span class="moreBtn">Read more</span>':``}
-      <div class="translated"></div>
-      <span class="translateBtn">🌐 Translate</span>
-      <div class="time">${time}</div>
-      ${isAdmin?'<button class="deleteBtn">❌ Delete</button>':``}
+      <button onclick="translateText(this, \`${data.text}\`)">
+        🌐 Translate
+      </button>
+
+      ${isAdmin ? `<button onclick="deleteStatus('${docSnap.id}')">❌ Delete</button>` : ``}
     `;
 
-    /* read more */
-    if(needsToggle){
-      const moreBtn=div.querySelector(".moreBtn");
-      const content=div.querySelector(".content");
-      let expanded=false;
-      moreBtn.onclick=()=>{
-        expanded=!expanded;
-        content.textContent=expanded?fullText:shortText+"...";
-        moreBtn.textContent=expanded?"Show less":"Read more";
-      }
-    }
-
-    /* translate */
-    const tBtn=div.querySelector(".translateBtn");
-    const tBox=div.querySelector(".translated");
-
-    tBtn.onclick=async()=>{
-      tBtn.textContent="Translating...";
-      const translated=await translateText(fullText,userLang);
-      tBox.innerHTML=translated;
-      tBtn.style.display="none";
-    }
-
-    /* delete */
-    if(isAdmin){
-      div.querySelector(".deleteBtn").onclick=()=>{
-        deleteStatus(docSnap.id);
-      }
-    }
-
-    posts.appendChild(div);
-  })
+    list.appendChild(div);
+  });
 });
 </script>
-
-</body>
-</html>
