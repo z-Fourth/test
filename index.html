@@ -61,9 +61,10 @@ window.adminLogin = function(){
 // 🔹 DỊCH NHANH (LibreTranslate)
 window.translateText = async function(button, originalText){
 
-  const lang = navigator.language.slice(0,2) || "en";
+  const lang = "en";   // 👉 luôn dịch sang tiếng Anh
   const cacheKey = originalText + lang;
 
+  // dùng cache nếu đã dịch
   if(translateCache[cacheKey]){
     button.previousElementSibling.innerText = translateCache[cacheKey];
     button.remove();
@@ -125,3 +126,4 @@ onSnapshot(q,(snapshot)=>{
   });
 });
 </script>
+
