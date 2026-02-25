@@ -47,7 +47,6 @@ body::after {
 .container {
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgba(255,255,255,0.25);
   box-shadow: 0 25px 60px rgba(0,0,0,0.35);
   width: 100%;
@@ -56,15 +55,13 @@ body::after {
   border-radius: 24px;
 }
 
-/* ===== TITLE ===== */
 .title {
   text-align: center;
   color: #E0C58F;
   margin-bottom: 18px;
-  letter-spacing: 0.5px;
 }
 
-/* ===== INPUT ===== */
+/* INPUT */
 input, textarea {
   width: 100%;
   padding: 14px;
@@ -79,7 +76,6 @@ input, textarea {
 textarea {
   resize: vertical;
   min-height: 100px;
-  max-height: 300px;
 }
 
 input::placeholder,
@@ -87,7 +83,7 @@ textarea::placeholder {
   color: rgba(255,255,255,0.7);
 }
 
-/* ===== BUTTON ===== */
+/* BUTTON */
 button {
   width: 100%;
   padding: 14px;
@@ -99,15 +95,9 @@ button {
   cursor: pointer;
   font-weight: 600;
   margin-bottom: 8px;
-  transition: 0.25s;
 }
 
-button:hover {
-  filter: brightness(1.15);
-  transform: translateY(-1px);
-}
-
-/* ===== POSTS ===== */
+/* POSTS */
 .post {
   background: rgba(255,255,255,0.2);
   backdrop-filter: blur(10px);
@@ -122,11 +112,6 @@ button:hover {
   margin-bottom: 6px;
 }
 
-.content {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
 .moreBtn {
   color: #E0C58F;
   cursor: pointer;
@@ -137,7 +122,6 @@ button:hover {
 .deleteBtn {
   margin-top: 8px;
   background: #3C5070;
-  border: none;
   color: #E0C58F;
   padding: 6px 10px;
   border-radius: 6px;
@@ -166,7 +150,7 @@ import {
   onSnapshot, serverTimestamp, deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* 🔥 Firebase */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyC3Yu_mU38Ru7PIEGR-2rNSo5FoelowrUQ",
   authDomain: "tuanhh-f16a9.firebaseapp.com",
@@ -179,172 +163,68 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🌍 Azure Translator */
-const AZURE_KEY = "6rJ6HYTwtmUotxFYAPRfsyQgJGAhz1G434PD1d8CcS0LC4aYxB7bJQQJ99CBAC3pKaRXJ3w3AAAbACOGZpu7";
-const AZURE_REGION = "eastasia";
-const AZURE_ENDPOINT = "https://api.cognitive.microsofttranslator.com";
-
-/* admin */
+/* ADMIN */
 const ADMIN_KEY = "123456";
 const params = new URLSearchParams(window.location.search);
 const isAdmin = params.get("admin") === ADMIN_KEY;
 
-
-/* user language */
-function getUserLang(){
-  return (navigator.language || "en").split("-")[0];
-}
-
-/* detect language */
-async function detectLanguage(text){
-  const res = await fetch(AZURE_ENDPOINT + "/detect?api-version=3.0",{
-    method:"POST",
-    headers:{
-      "Ocp-Apim-Subscription-Key":AZURE_KEY,
-      "Ocp-Apim-Subscription-Region":AZURE_REGION,
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify([{Text:text}])
-  });
-  const data = await res.json();
-  return data[0]?.language || "en";
-}
-
-/* translate */
-async function translateText(text,to){
-  const res = await fetch(AZURE_ENDPOINT + `/translate?api-version=3.0&to=${to}`,{
-    method:"POST",
-    headers:{
-      "Ocp-Apim-Subscription-Key":AZURE_KEY,
-      "Ocp-Apim-Subscription-Region":AZURE_REGION,
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify([{Text:text}])
-  });
-  const data = await res.json();
-  return data[0]?.translations[0]?.text || text;
-}
-
-/* post */
-window.postStatus = async ()=>{
+/* POST */
+window.postStatus = async () => {
   const text = statusInput.value.trim();
   let nickname = nicknameInput.value.trim();
 
-  if(!text) return alert("Write something!");
-  if(!nickname) nickname="Anonymous";
+  if (!text) return alert("Write something!");
+  if (!nickname) nickname = "Anonymous";
 
-  await addDoc(collection(db,"statuses"),{
-    text,nickname,time:serverTimestamp()
+  await addDoc(collection(db, "statuses"), {
+    text,
+    nickname,
+    time: serverTimestamp()
   });
 
-  statusInput.value="";
+  statusInput.value = "";
 };
 
-/* delete */
-window.deleteStatus = async id=>{
-  if(confirm("Delete this post?"))
-    await deleteDoc(doc(db,"statuses",id));
+/* DELETE */
+window.deleteStatus = async id => {
+  if (confirm("Delete this post?"))
+    await deleteDoc(doc(db, "statuses", id));
 };
 
-/* realtime */
-const q = query(collection(db,"statuses"),orderBy("time","desc"));
+/* REALTIME LOAD */
+const q = query(collection(db, "statuses"), orderBy("time", "desc"));
 
-onSnapshot(q,snapshot=>{
-  posts.innerHTML="";
+onSnapshot(q, snapshot => {
+  const container = document.getElementById("posts");
+  container.innerHTML = "";
 
-  let docs = snapshot.docs;
-  if(shuffleMode){
-    docs=[...docs];
-    shuffleArray(docs);
-  }
-
-  docs.forEach(docSnap=>{
+  snapshot.forEach(docSnap => {
     const data = docSnap.data();
 
-    const div=document.createElement("div");
-    div.className="post";
+    const div = document.createElement("div");
+    div.className = "post";
 
-    const name=document.createElement("div");
-    name.className="name";
-    name.textContent=data.nickname;
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = data.nickname || "Anonymous";
 
-    const content=document.createElement("div");
-    content.className="content";
-
-    const full=data.text;
-    const short=full.slice(0,200);
-    const long=full.length>200;
-
-    content.textContent= long ? short+"..." : full;
+    const content = document.createElement("div");
+    content.textContent = data.text;
 
     div.appendChild(name);
     div.appendChild(content);
 
-    /* expand */
-    if(long){
-      const expand=document.createElement("span");
-      expand.className="moreBtn";
-      expand.textContent="Expand";
-      let ex=false;
-
-      expand.onclick=()=>{
-        ex=!ex;
-        content.textContent=ex?full:short+"...";
-        expand.textContent=ex?"Shorten":"Expand";
-      };
-
-      div.appendChild(expand);
-    }
-
-    /* translate */
-    const translate=document.createElement("span");
-    translate.className="moreBtn";
-    translate.textContent="Translate";
-
-    let translated=false;
-    const userLang=getUserLang();
-
-    translate.onclick=async()=>{
-      if(!translated){
-        translate.textContent="...";
-        const source=await detectLanguage(full);
-
-        if(source===userLang){
-          translate.textContent="Same";
-          setTimeout(()=>translate.textContent="Translate",1200);
-          return;
-        }
-
-        const t=await translateText(full,userLang);
-        content.textContent=t;
-        translate.textContent="Original";
-        translated=true;
-      }else{
-        content.textContent= long? short+"..." : full;
-        translate.textContent="Translate";
-        translated=false;
-      }
-    };
-
-    div.appendChild(translate);
-
-    /* admin delete */
-    if(isAdmin){
-      const del=document.createElement("button");
-      del.className="deleteBtn";
-      del.textContent="Delete";
-      del.onclick=()=>deleteStatus(docSnap.id);
+    if (isAdmin) {
+      const del = document.createElement("button");
+      del.className = "deleteBtn";
+      del.textContent = "Delete";
+      del.onclick = () => deleteStatus(docSnap.id);
       div.appendChild(del);
     }
 
-    posts.appendChild(div);
+    container.appendChild(div);
   });
 });
 </script>
 </body>
 </html>
-
-
-
-
-
