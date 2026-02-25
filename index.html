@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -21,10 +21,11 @@ body{
   min-height:100vh;
   position:relative;
   overflow-x:hidden;
-
-  display:block; /* cho phép trang giãn theo chiều dọc */
+  display:block;
 }
-
+#imageInput{
+  display:none;
+}
 body::before{
   content:"";
   position:fixed;
@@ -46,51 +47,47 @@ body::after{
 /* ===== GLASS CONTAINER ===== */
 .container{
   width:100%;
-  max-width:600px;
+  max-width:1000px;
   padding:30px 25px;
   border-radius:26px;
   margin:auto;
   background:rgba(255,255,255,0.12);
   backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-
   border:1px solid rgba(255,255,255,0.25);
   box-shadow:0 25px 60px rgba(0,0,0,0.35);
 }
 
-/* ===== TITLE ===== */
+/* TITLE */
 .container h2{
   text-align:center;
   color:#E0C58F;
   margin-bottom:20px;
-  letter-spacing:.5px;
-  font-weight:600;
 }
 
-/* ===== INPUT ===== */
+/* INPUT */
 input, textarea{
   width:100%;
   padding:14px;
   border-radius:12px;
   border:1px solid rgba(255,255,255,0.4);
   background:rgba(255,255,255,0.25);
-  color:#fff;
+  color:#E0C58F; /* chữ nhập */
   font-size:16px;
   margin-bottom:10px;
 }
 
+/* màu placeholder */
 input::placeholder,
 textarea::placeholder{
-  color:rgba(255,255,255,0.7);
+  color:#E0C58F;
+  opacity:0.7;
 }
 
 textarea{
   resize:vertical;
   min-height:100px;
-  max-height:300px;
 }
 
-/* ===== BUTTON ===== */
 button{
   width:100%;
   padding:14px;
@@ -100,16 +97,10 @@ button{
   color:#E0C58F;
   font-size:18px;
   cursor:pointer;
-  font-weight:600;
-  transition:.25s;
+  margin-bottom:10px;
 }
 
-button:hover{
-  filter:brightness(1.15);
-  transform:translateY(-1px);
-}
-
-/* ===== POSTS ===== */
+/* POSTS */
 .post{
   background:rgba(255,255,255,0.18);
   backdrop-filter:blur(10px);
@@ -119,33 +110,224 @@ button:hover{
   color:white;
 }
 
-.name{
-  font-weight:600;
-  margin-bottom:6px;
+.postImage{
+  width:100%;
+  height:auto;
+  max-height:420px;
+  object-fit:cover;
+  border-radius:12px;
+}
+/* preview image */
+.previewBox{
+  display:none;
+  margin-top:10px;
+  position:relative;
+  overflow:hidden;
+  border-radius:12px;
 }
 
-.content{
-  white-space:pre-wrap;
-  word-wrap:break-word;
+.previewBox img{
+  width:100%;
+  max-height:220px;
+  object-fit:cover;
+  display:block;
 }
-
-/* ===== BUTTONS ===== */
-.moreBtn{
-  color:#E0C58F;
-  cursor:pointer;
-  font-size:14px;
-  margin-right:12px;
-}
-
+.name{font-weight:600;}
+.moreBtn{color:#E0C58F; cursor:pointer; margin-right:12px;}
 .deleteBtn{
-  margin-top:8px;
-  background:#3C5070;
-  border:none;
-  color:#E0C58F;
-  padding:6px 10px;
-  border-radius:6px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.95);
+  color: #111;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  transition: 0.2s;
+}
+
+.deleteBtn:hover{
+  background: #fff;
+  transform: scale(1.1);
+}
+/* khung chứa ô viết */
+/* khung chứa textarea */
+
+/* preview */
+.previewBox{
+  position: relative;
+  margin-top: 10px;
+}
+#removePreview{
+  position:absolute;
+  top:8px;
+  right:8px;
+  background:rgba(255,255,255,0.95);
+  color:#111;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
   cursor:pointer;
-  font-size:13px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.35);
+  transition:0.2s;
+}
+
+#removePreview:hover{
+  transform:scale(1.1);
+  background:#fff;
+}
+.previewBox img{
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+}
+.inputWrap{
+  position:relative;
+  margin-bottom:10px;
+
+}
+
+#statusInput{
+  padding-right:45px;
+}
+
+#imageBtn{
+  position:absolute;
+  bottom:6px;   /* ↓ hạ xuống thấp hơn */
+  right:10px;
+
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:none;
+  background:#3C5070;
+  color:#E0C58F;
+  cursor:pointer;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+}
+
+#imageBtn:hover{
+  transform:scale(1.1);
+}
+#dropZone{
+  border:2px dashed rgba(255,255,255,0.4);
+  padding:14px;
+  text-align:center;
+  border-radius:12px;
+  cursor:pointer;
+  color:#E0C58F;
+  margin-top:10px;
+}
+
+#dropZone.dragover{
+  border-color:#E0C58F;
+  background:rgba(255,255,255,0.1);
+}
+
+#previewContainer{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+
+.previewImg{
+  width:80px;
+  height:80px;
+  object-fit:cover;
+  border-radius:8px;
+}
+.previewItem{
+  position:relative;
+  display:inline-block;
+}
+
+.removeImg{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  border:none;
+  background:#fff;
+  color:#111;
+  font-size:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 1px 4px rgba(0,0,0,0.4);
+}
+
+.removeImg:hover{
+  transform:scale(1.1);
+}
+.imageGrid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:6px;
+  margin-top:10px;
+}
+
+.imageGrid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:6px;
+  margin-top:10px;
+}
+
+.imageGrid img{
+  width:100%;
+  height:100%;
+  object-fit: contain;
+  background:#000; /* cho đẹp nếu có khoảng trống */
+
+}
+
+/* 1 ảnh */
+.imageGrid.single{
+  grid-template-columns:1fr;
+}
+
+.imageGrid.single img{
+  height:auto;
+  max-height:420px;
+}
+
+/* 3 ảnh */
+.imageGrid.three{
+  grid-template-columns:2fr 1fr;
+  grid-template-rows:170px 170px;
+}
+
+.imageGrid.three img:first-child{
+  grid-row:1 / span 2;
+  height:100%;
+}
+.post{
+  overflow:hidden;
+}
+
+img{
+  max-width:100%;
+  display:block;
 }
 </style>
 </head>
@@ -155,12 +337,18 @@ button:hover{
   <h2>💬 Write Your Own Story</h2>
 
   <input id="nicknameInput" placeholder="Nickname (Optional)" />
+<div class="inputWrap">
   <textarea id="statusInput" placeholder="Your idea"></textarea>
+
+  <button type="button" id="imageBtn"></button>
+ <input type="file" id="imageInput" accept="image/*" multiple hidden>
+
+ <div id="dropZone">📷 Click hoặc kéo ảnh vào đây</div>
+<div id="previewContainer"></div>
   <button onclick="postStatus()">Post</button>
 
   <div id="posts"></div>
 </div>
-
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -169,7 +357,7 @@ import {
   onSnapshot, serverTimestamp, deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* 🔥 Firebase */
+/* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyC3Yu_mU38Ru7PIEGR-2rNSo5FoelowrUQ",
   authDomain: "tuanhh-f16a9.firebaseapp.com",
@@ -182,192 +370,301 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🌍 Azure Translator */
-const AZURE_KEY = "6rJ6HYTwtmUotxFYAPRfsyQgJGAhz1G434PD1d8CcS0LC4aYxB7bJQQJ99CBAC3pKaRXJ3w3AAAbACOGZpu7";
+/* ☁️ Cloudinary upload */
+const CLOUD_NAME = "zfourth";
+const UPLOAD_PRESET = "feedback";
+
+async function uploadImage(file){
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+
+  const res = await fetch(url,{ method:"POST", body:formData });
+  const data = await res.json();
+  return data.secure_url;
+}
+
+/* Azure Translator */
+const AZURE_KEY = "YOUR_KEY";
 const AZURE_REGION = "eastasia";
 const AZURE_ENDPOINT = "https://api.cognitive.microsofttranslator.com";
 
-// 🌍 lấy ngôn ngữ người truy cập
-function getUserLanguage() {
+function getUserLanguage(){
   return (navigator.language || "en").split("-")[0];
 }
 
-// 🔍 detect ngôn ngữ văn bản
-async function detectLanguage(text) {
-  const res = await fetch(
-    AZURE_ENDPOINT + "/detect?api-version=3.0",
-    {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": AZURE_KEY,
-        "Ocp-Apim-Subscription-Region": AZURE_REGION,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify([{ Text: text }])
-    }
-  );
-
+async function detectLanguage(text){
+  const res = await fetch(AZURE_ENDPOINT+"/detect?api-version=3.0",{
+    method:"POST",
+    headers:{
+      "Ocp-Apim-Subscription-Key":"6rJ6HYTwtmUotxFYAPRfsyQgJGAhz1G434PD1d8CcS0LC4aYxB7bJQQJ99CBAC3pKaRXJ3w3AAAbACOGZpu7",
+      "Ocp-Apim-Subscription-Region":AZURE_REGION,
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify([{Text:text}])
+  });
   const data = await res.json();
   return data[0]?.language || "en";
 }
 
-// 🌐 dịch văn bản
-async function translateText(text, toLang) {
-  const res = await fetch(
-    AZURE_ENDPOINT + `/translate?api-version=3.0&to=${toLang}`,
-    {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": AZURE_KEY,
-        "Ocp-Apim-Subscription-Region": AZURE_REGION,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify([{ Text: text }])
-    }
-  );
-
+async function translateText(text,toLang){
+  const res = await fetch(AZURE_ENDPOINT+`/translate?api-version=3.0&to=${toLang}`,{
+    method:"POST",
+    headers:{
+      "Ocp-Apim-Subscription-Key":AZURE_KEY,
+      "Ocp-Apim-Subscription-Region":AZURE_REGION,
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify([{Text:text}])
+  });
   const data = await res.json();
   return data[0]?.translations[0]?.text || text;
 }
+function compressImage(file){
+  return new Promise(resolve=>{
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = e => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxWidth = 1280;
+        const scale = maxWidth / img.width;
+        canvas.width = maxWidth;
+        canvas.height = img.height * scale;
 
-/* 🔑 Admin */
-const ADMIN_KEY = "123456";
-const params = new URLSearchParams(window.location.search);
-const isAdmin = params.get("admin") === ADMIN_KEY;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
 
-/* Post */
-window.postStatus = async () => {
-  const text = statusInput.value.trim();
-  let nickname = nicknameInput.value.trim();
-  if (!text) return alert("Write Something!");
-  if (!nickname) nickname = "Anonymous";
-
-  await addDoc(collection(db, "statuses"), {
-    text,
-    nickname,
-    time: serverTimestamp()
+        canvas.toBlob(blob=>{
+          resolve(new File([blob], file.name, {type:"image/jpeg"}));
+        }, "image/jpeg", 0.7);
+      };
+    };
   });
+}
+/* Admin */
+const ADMIN_KEY="123456";
+const params=new URLSearchParams(window.location.search);
+const isAdmin=params.get("admin")===ADMIN_KEY;
+/* IMAGE PICKER + MULTI PREVIEW + DRAG DROP */
+const imageBtn = document.getElementById("imageBtn");
+const imageInputEl = document.getElementById("imageInput");
+const dropZone = document.getElementById("dropZone");
+const previewContainer = document.getElementById("previewContainer");
 
-  statusInput.value = "";
+let selectedFiles = [];
+
+// mở chọn ảnh
+imageBtn.onclick = () => imageInputEl.click();
+dropZone.onclick = () => imageInputEl.click();
+
+// chọn ảnh
+imageInputEl.onchange = e => handleFiles(e.target.files);
+
+// kéo thả
+dropZone.ondragover = e => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
 };
 
-/* Delete */
-window.deleteStatus = async (id) => {
-  if (confirm("Delete this post?"))
-    await deleteDoc(doc(db, "statuses", id));
+dropZone.ondragleave = () => dropZone.classList.remove("dragover");
+
+dropZone.ondrop = e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  handleFiles(e.dataTransfer.files);
 };
 
-/* Realtime posts */
-const q = query(collection(db, "statuses"), orderBy("time", "desc"));
+function handleFiles(files){
+  [...files].forEach(file=>{
+    if(!file.type.startsWith("image/")) return;
 
-onSnapshot(q, snapshot => {
-  posts.innerHTML = "";
+    selectedFiles.push(file);
 
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const wrapper = document.createElement("div");
+      wrapper.className = "previewItem";
 
-    const div = document.createElement("div");
-    div.className = "post";
+      const img = document.createElement("img");
+      img.src = e.target.result;
+      img.className = "previewImg";
 
-    const nameDiv = document.createElement("div");
-    nameDiv.className = "name";
-    nameDiv.textContent = data.nickname || "Anonymous";
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "removeImg";
+      removeBtn.textContent = "✕";
 
-    const contentDiv = document.createElement("div");
-    contentDiv.className = "content";
-
-    const fullText = data.text || "";
-    const shortText = fullText.slice(0, 200);
-    const needsToggle = fullText.length > 200;
-
-    contentDiv.textContent = needsToggle ? shortText + "..." : fullText;
-
-    const timeDiv = document.createElement("div");
-    timeDiv.style.fontSize = "12px";
-    timeDiv.style.opacity = "0.6";
-    timeDiv.textContent =
-      data.time?.toDate?.().toLocaleString() || "";
-
-    div.appendChild(nameDiv);
-    div.appendChild(contentDiv);
-    div.appendChild(timeDiv);
-
-    /* Expand */
-    if (needsToggle) {
-      const toggle = document.createElement("span");
-      toggle.className = "moreBtn";
-      toggle.textContent = "Expand";
-      let expanded = false;
-
-      toggle.onclick = () => {
-        expanded = !expanded;
-        contentDiv.textContent = expanded ? fullText : shortText + "...";
-        toggle.textContent = expanded ? "Shorten" : "Expand";
+      removeBtn.onclick = () => {
+        const index = selectedFiles.indexOf(file);
+        if(index > -1) selectedFiles.splice(index,1);
+        wrapper.remove();
       };
 
+      wrapper.appendChild(img);
+      wrapper.appendChild(removeBtn);
+      previewContainer.appendChild(wrapper);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+
+/* POST */
+window.postStatus = async () => {
+
+  if(window.posting) return;
+  window.posting = true;
+
+  const text = statusInput.value.trim();
+  const files = selectedFiles;
+  let nickname = nicknameInput.value.trim();
+
+  if(!text && files.length === 0){
+    window.posting = false;
+    return;
+  }
+
+  if(!nickname) nickname = "Anonymous";
+
+  let imageUrls = [];
+
+  try{
+
+    const uploads = files.map(async file => {
+      const compressed = await compressImage(file);
+      return await uploadImage(compressed);
+    });
+
+    imageUrls = await Promise.all(uploads);
+
+    await addDoc(collection(db,"statuses"),{
+      text,
+      nickname,
+      images: imageUrls,
+      time: serverTimestamp()
+    });
+
+    // reset form
+    statusInput.value="";
+    nicknameInput.value="";
+    selectedFiles.length = 0;
+    previewContainer.innerHTML="";
+    imageInputEl.value="";
+
+  }catch(err){
+    alert("Upload failed. Try again.");
+    console.error(err);
+  }
+
+  window.posting = false;
+};
+
+/* DELETE */
+window.deleteStatus=async(id)=>{
+  if(confirm("Delete this post?"))
+    await deleteDoc(doc(db,"statuses",id));
+};
+
+/* LOAD POSTS */
+const q=query(collection(db,"statuses"),orderBy("time","desc"));
+
+onSnapshot(q,snapshot=>{
+  posts.innerHTML="";
+
+  snapshot.forEach(docSnap=>{
+    const data=docSnap.data();
+
+    const div=document.createElement("div");
+    div.className="post";
+
+    const name=document.createElement("div");
+    name.className="name";
+    name.textContent=data.nickname;
+
+    const content=document.createElement("div");
+    const fullText=data.text||"";
+    const shortText=fullText.slice(0,200);
+    const needsToggle=fullText.length>200;
+    content.textContent=needsToggle?shortText+"...":fullText;
+
+    const time=document.createElement("div");
+    time.style.fontSize="12px";
+    time.style.opacity="0.6";
+    time.textContent=data.time?.toDate?.().toLocaleString()||"";
+
+    div.appendChild(name);
+    div.appendChild(content);
+
+  // hỗ trợ dữ liệu cũ & mới
+if(data.images && data.images.length){
+
+  const grid = document.createElement("div");
+  grid.className = "imageGrid";
+
+  if(data.images.length === 1) grid.classList.add("single");
+  if(data.images.length === 3) grid.classList.add("three");
+
+  data.images.forEach(url=>{
+    const img = document.createElement("img");
+    img.src = url;
+    grid.appendChild(img);
+  });
+
+  div.appendChild(grid);
+}
+    div.appendChild(time);
+
+    if(needsToggle){
+      const toggle=document.createElement("span");
+      toggle.className="moreBtn";
+      toggle.textContent="Expand";
+      let expanded=false;
+      toggle.onclick=()=>{
+        expanded=!expanded;
+        content.textContent=expanded?fullText:shortText+"...";
+        toggle.textContent=expanded?"Shorten":"Expand";
+      };
       div.appendChild(toggle);
     }
 
-/* 🌍 Translate */
-const translateBtn = document.createElement("span");
-translateBtn.className = "moreBtn";
-translateBtn.textContent = "Translate";
+    const translateBtn=document.createElement("span");
+    translateBtn.className="moreBtn";
+    translateBtn.textContent="Translate";
 
-let translated = false;
-let translatedText = "";
-const userLang = getUserLanguage();
+    let translated=false;
+    const userLang=getUserLanguage();
 
-translateBtn.onclick = async () => {
-  try {
-    if (!translated) {
-      translateBtn.textContent = "Translating...";
-
-      const sourceLang = await detectLanguage(fullText);
-
-      // nếu cùng ngôn ngữ → không cần dịch
-      if (sourceLang === userLang) {
-        translateBtn.textContent = "Same language";
-        setTimeout(() => translateBtn.textContent = "Translate", 1500);
-        return;
+    translateBtn.onclick=async()=>{
+      if(!translated){
+        const srcLang=await detectLanguage(fullText);
+        if(srcLang===userLang) return;
+        const translatedText=await translateText(fullText,userLang);
+        content.textContent=translatedText;
+        translateBtn.textContent="Original";
+        translated=true;
+      }else{
+        content.textContent=needsToggle?shortText+"...":fullText;
+        translateBtn.textContent="Translate";
+        translated=false;
       }
+    };
 
-      translatedText = await translateText(fullText, userLang);
-      contentDiv.textContent = translatedText;
+    div.appendChild(translateBtn);
 
-      translateBtn.textContent = "Original";
-      translated = true;
-    } else {
-      contentDiv.textContent = needsToggle ? shortText + "..." : fullText;
-      translateBtn.textContent = "Translate";
-      translated = false;
-    }
-  } catch (err) {
-    console.error(err);
-    translateBtn.textContent = "Translate";
-    alert("Translation failed");
-  }
-};
-
-// ⭐ QUAN TRỌNG: thêm nút vào bài viết
-div.appendChild(translateBtn);
-
-    /* Admin delete */
-    if (isAdmin) {
-      const delBtn = document.createElement("button");
-      delBtn.className = "deleteBtn";
-      delBtn.textContent = "❌ Delete";
-      delBtn.onclick = () => deleteStatus(docSnap.id);
-      div.appendChild(delBtn);
+    if(isAdmin){
+      const del=document.createElement("button");
+      del.className="deleteBtn";
+      del.textContent="❌ Delete";
+      del.onclick=()=>deleteStatus(docSnap.id);
+      div.appendChild(del);
     }
 
     posts.appendChild(div);
   });
 });
 </script>
-
 </body>
 </html>
-
-
-
-
