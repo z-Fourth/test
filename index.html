@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<title>Journal of Speculative Worldbuilding</title>
+<title>Feedback</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
@@ -326,18 +326,18 @@ img{
 <body>
 
 <div class="container">
-  <h2>💬 Write Your Own Story</h2>
+  <h2>💬 Viết feedback cho mình nhé</h2>
 
-  <input id="nicknameInput" placeholder="Nickname (Optional)" />
+  <input id="nicknameInput" placeholder="Nơi viết tên của bạn (Không bắt buộc)" />
 <div class="inputWrap">
-  <textarea id="statusInput" placeholder="Your idea"></textarea>
+  <textarea id="statusInput" placeholder="Nơi bạn viết feedback"></textarea>
 
   <button type="button" id="imageBtn"></button>
  <input type="file" id="imageInput" accept="image/*" multiple hidden>
 
- <div id="dropZone">📷 Click hoặc kéo ảnh vào đây</div>
+ <div id="dropZone">📷Nơi bạn đăng ảnh (click hoặc kéo ảnh vào đây)</div>
 <div id="previewContainer"></div>
-  <button onclick="postStatus()">Post</button>
+  <button onclick="postStatus()">Đăng</button>
 
   <div id="posts"></div>
 </div>
@@ -378,7 +378,7 @@ async function uploadImage(file){
 }
 
 /* Azure Translator */
-const AZURE_KEY = "YOUR_KEY";
+const AZURE_KEY = "6rJ6HYTwtmUotxFYAPRfsyQgJGAhz1G434PD1d8CcS0LC4aYxB7bJQQJ99CBAC3pKaRXJ3w3AAAbACOGZpu7";
 const AZURE_REGION = "eastasia";
 const AZURE_ENDPOINT = "https://api.cognitive.microsofttranslator.com";
 
@@ -519,7 +519,7 @@ window.postStatus = async () => {
     return;
   }
 
-  if(!nickname) nickname = "Anonymous";
+  if(!nickname) nickname = "Ẩn Danh";
 
   let imageUrls = [];
 
@@ -612,19 +612,19 @@ if(data.images && data.images.length){
     if(needsToggle){
       const toggle=document.createElement("span");
       toggle.className="moreBtn";
-      toggle.textContent="Expand";
+      toggle.textContent="Xem Thêm";
       let expanded=false;
       toggle.onclick=()=>{
         expanded=!expanded;
         content.textContent=expanded?fullText:shortText+"...";
-        toggle.textContent=expanded?"Shorten":"Expand";
+        toggle.textContent=expanded?"Thu Gọn":"Xem Thêm";
       };
       div.appendChild(toggle);
     }
 
     const translateBtn=document.createElement("span");
     translateBtn.className="moreBtn";
-    translateBtn.textContent="Translate";
+    translateBtn.textContent="Dịch";
 
     let translated=false;
     const userLang=getUserLanguage();
@@ -635,11 +635,11 @@ if(data.images && data.images.length){
         if(srcLang===userLang) return;
         const translatedText=await translateText(fullText,userLang);
         content.textContent=translatedText;
-        translateBtn.textContent="Original";
+        translateBtn.textContent="Bản Gốc";
         translated=true;
       }else{
         content.textContent=needsToggle?shortText+"...":fullText;
-        translateBtn.textContent="Translate";
+        translateBtn.textContent="Dịch";
         translated=false;
       }
     };
@@ -660,4 +660,5 @@ if(data.images && data.images.length){
 </script>
 </body>
 </html>
+
 
